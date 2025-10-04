@@ -3,10 +3,10 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.keras.preprocessing import image
 
-# Load model (.keras)
+# Load model (.h5)
 @st.cache_resource  # biar model cuma diload sekali
 def load_model():
-    return tf.keras.models.load_model("cnn_tbc_model.keras")
+    return tf.keras.models.load_model("cnn_tbc_model.h5")
 
 model = load_model()
 
