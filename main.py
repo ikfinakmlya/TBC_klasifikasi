@@ -1,32 +1,38 @@
 import streamlit as st
-import tensorflow as tf
+from keras.models import load_model
+from PIL import Image
 import numpy as np
-from tensorflow.keras.preprocessing import image
 
-# Load model (.h5)
-@st.cache_resource  # biar model cuma diload sekali
-def load_model():
-    return tf.keras.models.load_model("cnn_tbc_model.h5")
+from util import classify, set_background
 
-model = load_model()
 
-# Judul Aplikasi
-st.title("Klasifikasi Citra TBC vs Normal")
-st.write("Upload gambar X-ray untuk deteksi **TBC** menggunakan model CNN.")
+##set_background('./bgs/bg5.png')
 
-# Upload gambar
-uploaded_file = st.file_uploader("Pilih gambar...", type=["jpg","jpeg","png"])
+# set title
+st.title('Pneumonia classification')
 
-if uploaded_file is not None:
-    # Preprocessing gambar
-    img = image.load_img(uploaded_file, target_size=(64,64))
-    img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0) / 255.0
+# set header
+st.header('Please upload a chest X-ray image')
 
-    # Prediksi
-    prediction = model.predict(img_array)
-    label = "TBC" if prediction[0][0] > 0.5 else "Normal"
+# upload file
+file = st.file_uploader('', type=['jpeg', 'jpg', 'png'])
 
-    # Output
-    st.image(img, caption=f"Hasil Prediksi: {label}", use_container_width=True)
-    st.success(f"✅ Prediksi Model: **{label}**")
+# load classifier
+model = load_model('cnn_tbc_model.h5')
+
+# load class names
+with open('./model/labels.txt', 'r') as f:
+    class_names = [a[:-1].split(' ')[1] for a in f.readlines()]
+    f.close()
+
+# display image
+if file is not None:
+    image = Image.open(file).convert('RGB')
+    st.image(image, use_column_width=True)
+
+    # classify image
+    class_name, conf_score = classify(image, model, class_names)
+
+    # write classification
+    st.write("## {}".format(class_name))
+    st.write("### score: {}%".format(int(conf_score * 1000) / 10))
